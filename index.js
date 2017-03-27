@@ -7,8 +7,15 @@ const path = require('path')
 const process = require('process')
 const pretty = require('depmap-errors')
 
-const depmap = require(path.join(process.cwd(), 'node_modules/depmap'))
-  || require('depmap')
+async function findDepmap () {
+  return await new Promise((resolve, reject) => {
+    let global = path.join(process.cwd(), 'node_modules/depmap')
+    fs.stat(global, (err, data) => {
+      if (err) resolve('depmap')
+      resolve(global)
+    })
+  })
+}
 
 const args = process.argv
 const env = process.env.NODE_ENV || ''
@@ -29,8 +36,14 @@ else {
     }
 
     opts = require(path.join(process.cwd(), 'config.js'))
-    depmap.build(opts)
-      .then(map => depmap[args[2]](map, opts))
+
+    findDepmap()
+      .then(path => {
+        let depmap = require(path)
+        depmap.build(opts)
+          .then(map => depmap[args[2]](map, opts))
+          .catch(pretty.error)
+      })
       .catch(pretty.error)
   })
 }
