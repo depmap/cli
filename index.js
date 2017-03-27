@@ -4,9 +4,12 @@
 
 const fs = require('fs')
 const path = require('path')
+const process = require('process')
 const depmap = require('depmap')
-const buildMap = require('depmap-builder')
 const pretty = require('depmap-errors')
+
+const buildMap = require(path.join(process.cwd(), 'node_modules/depmap-builder'))
+  || require('depmap-builder')
 
 const args = process.argv
 const env = process.env.NODE_ENV || ''
@@ -19,21 +22,22 @@ const cmds = {
 
 if (args.length < 2 || args[2] === 'help') for (let cmd in cmds) console.log(cmds[cmd])
 else {
-  getOpts()
+  findCfg()
     .then(buildMap)
     .then(depmap[args[2]])
     .catch(pretty.error)
 }
 
-function getOpts () {
+function findCfg () {
   return new Promise((resolve, reject) => {
-    fs.stat(`./config.${env}.js`, (err, data) => {
+    let cfg = env ? `config.${env}.js` : 'config.js'
+    fs.stat(cfg, (err, data) => {
       if (err) {
-        pretty.warn('Warning: Using default config')
+        pretty.warn('Warning: No config found. Using default config')
         resolve({})
       }
 
-      resolve(require(path.join(__dirname, 'config.js')))
+      resolve(require(path.join(process.cwd(), 'config.js')))
     })
   })
 }
