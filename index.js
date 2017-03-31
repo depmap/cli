@@ -7,8 +7,7 @@ const path = require('path')
 const process = require('process')
 const pretty = require('depmap-errors')
 
-async function findDepmap () {
-  return await new Promise((resolve, reject) => {
+async function findDepmap () { return await new Promise((resolve, reject) => {
     let global = path.join(process.cwd(), 'node_modules/depmap')
     fs.stat(global, (err, data) => {
       if (err) resolve('depmap')
@@ -29,20 +28,19 @@ const cmds = {
 if (args.length < 3 || args[2] === 'help') for (let cmd in cmds) console.log(cmds[cmd])
 else {
   let cfg = env ? `config.${env}.js` : 'config.js'
+  cfg = path.join(process.cwd(), cfg)
+
   let opts = {}
   fs.stat(cfg, (err, data) => {
-    if (err) {
-      pretty.warn('Warning: No config found. Using default config')
-    }
-
-    opts = require(path.join(process.cwd(), 'config.js'))
+    if (!err) opts = require(cfg)
+    else pretty.warn('Warning: No config found. Using default config')
 
     findDepmap()
-      .then(path => {
-        let depmap = require(path)
-        depmap.build(opts)
-          .then(map => depmap[args[2]](map, opts))
-          .catch(pretty.error)
+      .then(mod => {
+        let depmap = require(mod)
+        let map
+        [ map, opts ] = depmap.build(opts)
+        depmap[args[2]](map, opts)
       })
       .catch(pretty.error)
   })
