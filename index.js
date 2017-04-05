@@ -25,7 +25,7 @@ const cmds = {
   help: '    help:    display this dialog'
 }
 
-if (args.length < 3 || args[2] === 'help') for (let cmd in cmds) console.log(cmds[cmd])
+if (args.length < 3 || args[2] === 'help' || !cmds[args[2]]) for (let cmd in cmds) console.log(cmds[cmd])
 else {
   let cfg = env ? `config.${env}.js` : 'config.js'
   cfg = path.join(process.cwd(), cfg)
