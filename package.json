@@ -9,14 +9,21 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "enginesStrict": true,
+  "engines": {
+    "node": ">= 7.9.0"
+  },
+  "dependencies": {
+    "@depmap/errors": "1.0.0"
+  },
+  "homepage": "https://github.com/depmap/cli#readme",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/depmap/cli.git"
   },
-  "author": "",
+  "author": "Henry Snopek <hhsnopek@gmail.com> (http://hhsnopek.com/)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/depmap/cli/issues"
-  },
-  "homepage": "https://github.com/depmap/cli#readme"
+  }
 }
