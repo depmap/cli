@@ -1,5 +1,5 @@
 {
-  "name": "depmap-cli",
+  "name": "@depmap/cli",
   "version": "1.0.0",
   "description": "depmap cli",
   "preferGlobal": true,
@@ -14,7 +14,10 @@
     "node": ">= 7.9.0"
   },
   "dependencies": {
-    "@depmap/errors": "1.0.0"
+    "@depmap/errors": "1.0.0",
+    "argparse": "^1.0.9",
+    "browser-sync": "^2.18.8",
+    "fs-extra": "^3.0.1"
   },
   "homepage": "https://github.com/depmap/cli#readme",
   "repository": {

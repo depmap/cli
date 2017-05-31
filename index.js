@@ -3,45 +3,157 @@
 'use strict'
 
 const fs = require('fs')
+const removeSync = require('fs-extra').removeSync
 const path = require('path')
 const process = require('process')
-const pretty = require('depmap-errors')
+const ArgParser = require('argparse').ArgumentParser
+const pretty = require('@depmap/errors')
+const VERSION = require('./package.json').version
 
-async function findDepmap () { return await new Promise((resolve, reject) => {
-    let global = path.join(process.cwd(), 'node_modules/depmap')
+const cli = new ArgParser({
+  version: VERSION,
+  addHelp: true,
+  description: 'depmap - dependency map'
+})
+
+cli.addArgument(['-d', '--debug'], {
+  action: 'storeTrue',
+  help: 'Enable debugging'
+})
+
+cli.addArgument(['-s', '--stateless'], {
+  action: 'storeTrue',
+  help: 'Stateless mode'
+})
+
+cli.addArgument(['-c', '--cfg'], {
+  action: 'store',
+  type: 'string',
+  nargs: 1,
+  help: 'Set configuration'
+})
+
+const cmds = cli.addSubparsers({
+  title: 'Commands',
+  dest: 'cmd'
+})
+
+cmds.addParser('compile', {
+  help: 'Build the project once. If the build directory is present, will only update the difference'
+})
+
+cmds.addParser('watch', {
+  help: 'Continuously compile the project when files are updated'
+})
+
+let cleanCmd = cmds.addParser('clean', {
+  help: 'Clean up build directory and/or cache'
+})
+
+cleanCmd.addArgument('what', {
+  action: 'store',
+  choices: ['build', 'cache', 'all'],
+  defaultValue: 'all',
+  nargs: '*'
+})
+
+class Debug {
+  constructor(verbose) {
+    this.log = console.log
+    if (!verbose) this.log = function(){}
+  }
+
+  info(msg) {
+    this.log(msg)
+  }
+
+  warn(msg) {
+    pretty.warn(msg)
+  }
+
+  error(err) {
+    pretty.error(err)
+  }
+}
+
+const args = cli.parseArgs()
+const debug = new Debug(args.debug)
+Promise.all([findDepmap(args), findConfig(args.config), args])
+  .then(run)
+  .catch(pretty.error)
+
+function run([depmap, config, args]) {
+  if (args.cmd === 'clean') clean(args.what, config)
+
+  depmap = require(depmap)
+  let map = {}
+  let opts = {} ;[map, opts] = depmap.build(config)
+  opts.logger = debug
+
+  depmap.compile(map, opts, !!(args.cmd === 'compile'))
+}
+
+function findConfig(path) {
+  return new Promise((resolve, reject) => {
+    let cfg
+    let cfgPath = 'config.js'
+
+    if (path) cfg = loadCfg(path[0])
+    else cfg = loadCfg(cfgPath)
+
+    if (!cfg) {
+      cfgPath = 'package.json'
+      cfg = loadCfg(cfgPath)
+      cfg = cfg.depmap ? cfg.depmap : cfg
+    }
+
+    if (!cfg) reject(new Error('No config found.'))
+    else {
+      debug.info(`Config loaded from: ${cfgPath}`)
+      resolve(cfg)
+    }
+    return
+  })
+}
+
+function findDepmap() {
+  return new Promise((resolve, reject) => {
+    const global = path.join(process.cwd(), 'node_modules/@depmap/depmap')
     fs.stat(global, (err, data) => {
-      if (err) resolve('depmap')
+      if (err) resolve('@depmap/depmap')
       resolve(global)
     })
   })
 }
 
-const args = process.argv
-const env = process.env.NODE_ENV || ''
-const cmds = {
-  __usage: 'usage:\n      depmap [option]\n\noptions:',
-  compile: '    compile: build the project once. If the build directory is present, will only update the difference',
-  watch: '    watch:   continuously compile the project when files are updated',
-  help: '    help:    display this dialog'
+function clean(argument, opts) {
+  let build = opts.build || 'build'
+  let cache = opts.cache && opts.cache.path ? opts.cache.path : '.cache'
+
+  console.log(argument)
+  if (argument[0] === 'build') {
+    removeSync(build)
+    console.log(`Lets rebuild from a clean slate, ${build} has been destoryed!`)
+  } else if (argument[0] === 'cache') {
+    removeSync(cache)
+    console.log(`Removed the old for the new, ${cache} has been removed.`)
+  } else {
+    removeSync(build)
+    removeSync(cache)
+    console.log(`All clean, ${build} and ${cache} are no more!`)
+  }
+
+  process.exit(0)
 }
 
-if (args.length < 3 || args[2] === 'help' || !cmds[args[2]]) for (let cmd in cmds) console.log(cmds[cmd])
-else {
-  let cfg = env ? `config.${env}.js` : 'config.js'
-  cfg = path.join(process.cwd(), cfg)
+function loadCfg (file) {
+  let cfg
+  try {
+    cfg = require(path.join(process.cwd(), file))
+  } catch (e) {
+    cfg = undefined
+  }
 
-  let opts = {}
-  fs.stat(cfg, (err, data) => {
-    if (!err) opts = require(cfg)
-    else pretty.warn('Warning: No config found. Using default config')
-
-    findDepmap()
-      .then(mod => {
-        let depmap = require(mod)
-        let map
-        [ map, opts ] = depmap.build(opts)
-        depmap[args[2]](map, opts)
-      })
-      .catch(pretty.error)
-  })
+  return cfg
 }
+
