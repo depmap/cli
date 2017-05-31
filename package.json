@@ -28,5 +28,7 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/depmap/cli/issues"
-  }
+  },
+  "main": "index.js",
+  "devDependencies": {}
 }
