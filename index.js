@@ -130,7 +130,6 @@ function clean(argument, opts) {
   let build = opts.build || 'build'
   let cache = opts.cache && opts.cache.path ? opts.cache.path : '.cache'
 
-  console.log(argument)
   if (argument[0] === 'build') {
     removeSync(build)
     console.log(`Lets rebuild from a clean slate, ${build} has been destoryed!`)
@@ -151,6 +150,8 @@ function loadCfg (file) {
   try {
     cfg = require(path.join(process.cwd(), file))
   } catch (e) {
+    debug.info(`Unable to load: ${file}`)
+    debug.info(e)
     cfg = undefined
   }
 
