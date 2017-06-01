@@ -83,6 +83,7 @@ Promise.all([findDepmap(args), findConfig(args.config), args])
   .catch(pretty.error)
 
 function run([depmap, [config, cfgPath], args]) {
+  debug.info(`Debugging...`)
   if (args.cmd === 'clean') clean(args.what, config)
   config.cliArgs = args
 
