@@ -82,8 +82,25 @@ Promise.all([findDepmap(args), findConfig(args.config), args])
   .then(run)
   .catch(pretty.error)
 
-function run([depmap, config, args]) {
+function run([depmap, [config, cfgPath], args]) {
   if (args.cmd === 'clean') clean(args.what, config)
+  config.cliArgs = args
+
+  // TODO automate this
+  debug.info(`
+  CLI Options:
+    debug:     ${args.debug}
+    stateless: ${args.stateless}
+    cfg:       ${args.cfg}
+    cmd:       ${args.cmd}
+
+  Depmap Config: ${path.relative(process.cwd(), path.resolve(cfgPath))}
+    path:   ${config.path}
+    output: ${config.output}
+    load:   [${Object.keys(config.load)}]
+    cache:
+      path: ${config.cache.path}
+  `)
 
   depmap = require(depmap)
   let map = {}
@@ -109,8 +126,7 @@ function findConfig(path) {
 
     if (!cfg) reject(new Error('No config found.'))
     else {
-      debug.info(`Config loaded from: ${cfgPath}`)
-      resolve(cfg)
+      resolve([cfg, cfgPath])
     }
     return
   })
@@ -157,4 +173,3 @@ function loadCfg (file) {
 
   return cfg
 }
-
