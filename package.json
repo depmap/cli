@@ -1,6 +1,6 @@
 {
   "name": "@depmap/cli",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Command Line Interface for Depmap",
   "preferGlobal": true,
   "bin": {
