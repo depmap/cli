@@ -100,7 +100,7 @@ function run([depmap, [config, cfgPath], args]) {
     output: ${config.output}
     load:   [${Object.keys(config.load)}]
     cache:
-      path: ${config.cache.path}
+      path: ${config.cache ? config.cache.path : '.cache'}
   `)
 
   depmap = require(depmap)
